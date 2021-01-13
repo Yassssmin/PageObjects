@@ -1,15 +1,13 @@
 package ru.netology.data;
 
+import com.github.javafaker.Faker;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Setter;
 import lombok.Value;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Random;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DataHelper {
     private DataHelper() {}
@@ -33,7 +31,6 @@ public class DataHelper {
         return new VerificationCode("12345");
     }
 
-    @Setter
     @Data
     @AllArgsConstructor
     public static class CardInfo {
@@ -42,62 +39,51 @@ public class DataHelper {
         private String nominal;
     }
 
-    public static CardInfo getFirstCardInfo() {
-        return new CardInfo("5559 0000 0000 0001", "10000", "RUB");
+    @Setter
+    @Data
+    @AllArgsConstructor
+    public static class CardInfoFull {
+        private String id;
+        private String number;
+        private int balance;
     }
 
-    public static CardInfo getSecondCardInfo() {
-        return new CardInfo("5559 0000 0000 0002", "10000", "RUB");
+    public static ArrayList<CardInfo> getCards() {
+        ArrayList<CardInfo> cards = new ArrayList<>();
+
+        cards.add(new CardInfo("5559 0000 0000 0001", "10000", "RUB"));
+        cards.add(new CardInfo("5559 0000 0000 0002", "10000", "RUB"));
+
+        return cards;
     }
 
-    public static CardInfo getInvalidCardInfo() {
-        return new CardInfo("5559 0000 0000 0003", "10000", "RUB");
+    public static String getRandomCardNumber() {
+        Faker faker = new Faker();
+
+        return faker.business().creditCardNumber();
     }
 
     public static String getMaskedCardNumber(CardInfo cardInfo) {
         return cardInfo.getNumber().replaceAll("^\\d{4} \\d{4} \\d{4}", "**** **** ****");
     }
 
-    public static int getRandomAmount(CardInfo cardInfo) {
+    public static int getRandomAmount(int cardBalance) {
         Random random = new Random();
 
-        return random.nextInt(Integer.parseInt(cardInfo.getBalance()));
+        return random.nextInt(cardBalance);
     }
 
-    public static int getInvalidAmount(CardInfo cardInfo) {
+    public static int getInvalidAmount(int cardBalance) {
         Random random = new Random();
 
-        return Integer.parseInt(cardInfo.getBalance()) + random.nextInt();
+        return cardBalance + random.nextInt();
     }
 
-    public static int getInvalidAmountZero(CardInfo cardInfo) {
+    public static void transferMoney(CardInfoFull from, CardInfoFull to, int amount) {
+        int fromBalance = from.getBalance() - amount;
+        int toBalance = to.getBalance() + amount;
 
-        return 0;
-    }
-
-    public static void transferMoney(CardInfo from, CardInfo to, int amount) {
-        int fromBalance = Integer.parseInt(from.getBalance()) - amount;
-        int toBalance = Integer.parseInt(to.getBalance()) + amount;
-
-        from.setBalance(String.valueOf(fromBalance));
-        to.setBalance(String.valueOf(toBalance));
-    }
-
-    public static Collection<String> toMaskedCardsPrint(Collection<CardInfo> cards) {
-        Collection<String> maskedCards = new ArrayList<>();
-
-        for (CardInfo card : cards) {
-            String maskedNumber = maskedNumber(card.getNumber());
-
-            String maskedCard = String.format("%s, баланс: %s р.", maskedNumber, card.getBalance());
-
-            maskedCards.add(maskedCard);
-        }
-
-        return maskedCards;
-    }
-
-    private static String maskedNumber(String number) {
-        return "**** ".repeat(3) + number.substring(15);
+        from.setBalance(fromBalance);
+        to.setBalance(toBalance);
     }
 }

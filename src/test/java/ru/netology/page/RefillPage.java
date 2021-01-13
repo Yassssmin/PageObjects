@@ -1,22 +1,25 @@
 package ru.netology.page;
 
 import com.codeborne.selenide.SelenideElement;
-import ru.netology.data.DataHelper;
 
-import javax.xml.validation.Validator;
-
+import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Selenide.$;
 
 public class RefillPage {
-    private SelenideElement Button = $("[data-test-id=action-transfer]");
+    private SelenideElement button = $("[data-test-id=action-transfer]");
 
-    public DashboardPage fillInfo(DataHelper.CardInfo cardInfo, int amount) {
+    public DashboardPage fillInfo(String cardNumber, Integer amount) {
         $("[data-test-id=amount] input").setValue(String.valueOf(amount));
-        $("[data-test-id=from] input").setValue(cardInfo.getNumber());
+        $("[data-test-id=from] input").setValue(cardNumber);
 
-        Button.click();
+        button.click();
 
         return new DashboardPage();
     }
 
+    public static class Error {
+        private static SelenideElement error = $("[data-test-id=error-notification]");
+
+        public static void checkError() { error.shouldBe(text("Ошибка! Произошла ошибка")); }
+    }
 }
