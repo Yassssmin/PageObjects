@@ -7,6 +7,7 @@ import static com.codeborne.selenide.Selenide.$;
 
 public class RefillPage {
     private SelenideElement button = $("[data-test-id=action-transfer]");
+    private static SelenideElement error = $("[data-test-id=error-notification]");
 
     public DashboardPage fillInfo(String cardNumber, Integer amount) {
         $("[data-test-id=amount] input").setValue(String.valueOf(amount));
@@ -15,11 +16,8 @@ public class RefillPage {
         button.click();
 
         return new DashboardPage();
+
     }
 
-    public static class Error {
-        private static SelenideElement error = $("[data-test-id=error-notification]");
-
-        public static void checkError() { error.shouldBe(text("Ошибка! Произошла ошибка")); }
-    }
+    public static void checkError() { error.shouldBe(text("Ошибка! Произошла ошибка")); }
 }

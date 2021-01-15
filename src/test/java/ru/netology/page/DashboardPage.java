@@ -5,11 +5,6 @@ import static com.codeborne.selenide.Condition.*;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
 import lombok.val;
-import org.openqa.selenium.WebElement;
-import ru.netology.data.DataHelper;
-
-import java.util.Collection;
-import java.util.HashMap;
 
 import static com.codeborne.selenide.Selenide.*;
 
@@ -20,31 +15,22 @@ public class DashboardPage {
     private final String balanceFinish = " р.";
     private final int numberLength = 19;
 
-
     public DashboardPage() {
         heading.shouldBe(visible);
     }
 
-    public HashMap<String, String> getCardsIds() {
-        HashMap<String, String> cardIds = new HashMap<>();
+    public String getCardId(String cardNumber) {
+        String cardLastFourNumber = cardNumber.substring(15);
 
-        for (WebElement card : cards) {
-            String cardId = card.getAttribute("data-test-id");
-            String cardNumber = getCardNumber(cardId);
-            cardIds.put(cardNumber, cardId);
-        }
-
-        return cardIds;
+        return cards.find(text(cardLastFourNumber)).getAttribute("data-test-id");
     }
 
-    public int getCardBalance(String id) {
-        for (WebElement card : cards) {
-            if (card.getAttribute("data-test-id").equals(id)) {
-                return extractBalance(card.getText());
-            }
-        }
+    public int getCardBalance(String cardNumber) {
+        val cardId = getCardId(cardNumber);
 
-        return 0;
+        val cardElement = $(".list__item>div[data-test-id='" + cardId + "']");
+
+        return extractBalance(cardElement.getText());
     }
 
     private int extractBalance(String text) {
@@ -54,37 +40,13 @@ public class DashboardPage {
         return Integer.parseInt(value);
     }
 
-    public String getCardNumber(String id) {
-        for (WebElement card : cards) {
-            if (card.getAttribute("data-test-id").equals(id)) {
-                return extractNumber(card.getText());
-            }
-        }
+    public RefillPage selectCard(String cardNumber) {
+        val cardId = getCardId(cardNumber);
 
-        return "";
-    }
-
-    private String extractNumber(String text) {
-        return text.substring(0, numberLength);
-    }
-
-    public RefillPage selectCard(String id) {
-        val cardElement = $(".list__item>div[data-test-id='" + id + "']");
+        val cardElement = $(".list__item>div[data-test-id='" + cardId + "']");
 
         cardElement.$("button[data-test-id=action-deposit]").click();
 
         return new RefillPage();
-    }
-
-    public boolean checkCardsBalance(Collection<DataHelper.CardInfoFull> cards) throws Exception {
-        for (DataHelper.CardInfoFull card : cards) {
-            int cardBalance = getCardBalance(card.getId());
-
-            if (cardBalance != card.getBalance()) {
-                return false;
-            }
-        }
-
-        return true;
     }
 }

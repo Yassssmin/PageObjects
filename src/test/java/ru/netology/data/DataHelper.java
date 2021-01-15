@@ -3,10 +3,8 @@ package ru.netology.data;
 import com.github.javafaker.Faker;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Setter;
 import lombok.Value;
 
-import java.util.ArrayList;
 import java.util.Random;
 
 public class DataHelper {
@@ -35,36 +33,22 @@ public class DataHelper {
     @AllArgsConstructor
     public static class CardInfo {
         private String number;
-        private String balance;
+        private int balance;
         private String nominal;
     }
 
-    @Setter
-    @Data
-    @AllArgsConstructor
-    public static class CardInfoFull {
-        private String id;
-        private String number;
-        private int balance;
+    public static CardInfo getFirstCardInfo() {
+        return new CardInfo("5559 0000 0000 0001", 10000, "RUB");
     }
 
-    public static ArrayList<CardInfo> getCards() {
-        ArrayList<CardInfo> cards = new ArrayList<>();
-
-        cards.add(new CardInfo("5559 0000 0000 0001", "10000", "RUB"));
-        cards.add(new CardInfo("5559 0000 0000 0002", "10000", "RUB"));
-
-        return cards;
+    public static CardInfo getSecondCardInfo() {
+        return new CardInfo("5559 0000 0000 0002", 10000, "RUB");
     }
 
     public static String getRandomCardNumber() {
         Faker faker = new Faker();
 
         return faker.business().creditCardNumber();
-    }
-
-    public static String getMaskedCardNumber(CardInfo cardInfo) {
-        return cardInfo.getNumber().replaceAll("^\\d{4} \\d{4} \\d{4}", "**** **** ****");
     }
 
     public static int getRandomAmount(int cardBalance) {
@@ -79,7 +63,7 @@ public class DataHelper {
         return cardBalance + random.nextInt();
     }
 
-    public static void transferMoney(CardInfoFull from, CardInfoFull to, int amount) {
+    public static void transferMoney(CardInfo from, CardInfo to, int amount) {
         int fromBalance = from.getBalance() - amount;
         int toBalance = to.getBalance() + amount;
 

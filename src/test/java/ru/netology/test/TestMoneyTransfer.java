@@ -9,15 +9,12 @@ import ru.netology.page.DashboardPage;
 import ru.netology.page.LoginPage;
 import ru.netology.page.RefillPage;
 
-import java.util.ArrayList;
-
 import static com.codeborne.selenide.Selenide.open;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestMoneyTransfer {
     public DashboardPage dashboardPage;
-    public ArrayList<DataHelper.CardInfoFull> cards = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
@@ -28,146 +25,145 @@ public class TestMoneyTransfer {
         val verificationPage = loginPage.validLogin(authInfo);
         val verificationCode = DataHelper.getVerificationCode(authInfo);
         dashboardPage = verificationPage.validVerify(verificationCode);
-
-        cards.clear();
-
-        val userCards = DataHelper.getCards();
-
-        val cardIds = dashboardPage.getCardsIds();
-
-        for (DataHelper.CardInfo userCard : userCards) {
-            val maskedCardNumber = DataHelper.getMaskedCardNumber(userCard);
-
-            val cardId = cardIds.get(maskedCardNumber);
-            val cardNumber = userCard.getNumber();
-            val cardBalance = dashboardPage.getCardBalance(cardId);
-
-            val cardInfoFull = new DataHelper.CardInfoFull(cardId, cardNumber, cardBalance);
-
-            cards.add(cardInfoFull);
-        }
     }
 
     @Test
-    void shouldTransferMoneyFromSecondToFirstCards() throws Exception {
-        val firstCard = cards.get(0);
-        val secondCard = cards.get(1);
+    void shouldTransferMoneyFromSecondToFirstCards() {
+        val firstCardInfo = DataHelper.getFirstCardInfo();
+        firstCardInfo.setBalance(dashboardPage.getCardBalance(firstCardInfo.getNumber()));
+        val secondCardInfo = DataHelper.getSecondCardInfo();
+        secondCardInfo.setBalance(dashboardPage.getCardBalance(secondCardInfo.getNumber()));
 
-        val amount = DataHelper.getRandomAmount(secondCard.getBalance());
+        val amount = DataHelper.getRandomAmount(secondCardInfo.getBalance());
 
-        val refillPage = dashboardPage.selectCard(firstCard.getId());
-        val updatedDashboardPage = refillPage.fillInfo(secondCard.getNumber(), amount);
+        val refillPage = dashboardPage.selectCard(firstCardInfo.getNumber());
+        val updatedDashboardPage = refillPage.fillInfo(secondCardInfo.getNumber(), amount);
 
-        DataHelper.transferMoney(secondCard, firstCard, amount);
+        DataHelper.transferMoney(secondCardInfo, firstCardInfo, amount);
 
-        assertTrue(updatedDashboardPage.checkCardsBalance(cards));
+        assertEquals(updatedDashboardPage.getCardBalance(firstCardInfo.getNumber()), firstCardInfo.getBalance());
+        assertEquals(updatedDashboardPage.getCardBalance(secondCardInfo.getNumber()), secondCardInfo.getBalance());
     }
 
     @Test
-    void shouldTransferMoneyFromFirstToSecondCards() throws Exception {
-        val firstCard = cards.get(0);
-        val secondCard = cards.get(1);
+    void shouldTransferMoneyFromFirstToSecondCards() {
+        val firstCardInfo = DataHelper.getFirstCardInfo();
+        firstCardInfo.setBalance(dashboardPage.getCardBalance(firstCardInfo.getNumber()));
+        val secondCardInfo = DataHelper.getSecondCardInfo();
+        secondCardInfo.setBalance(dashboardPage.getCardBalance(secondCardInfo.getNumber()));
 
-        val amount = DataHelper.getRandomAmount(firstCard.getBalance());
+        val amount = DataHelper.getRandomAmount(firstCardInfo.getBalance());
 
-        val refillPage = dashboardPage.selectCard(secondCard.getId());
-        val updatedDashboardPage = refillPage.fillInfo(firstCard.getNumber(), amount);
+        val refillPage = dashboardPage.selectCard(secondCardInfo.getNumber());
+        val updatedDashboardPage = refillPage.fillInfo(firstCardInfo.getNumber(), amount);
 
-        DataHelper.transferMoney(firstCard, secondCard, amount);
+        DataHelper.transferMoney(firstCardInfo, secondCardInfo, amount);
 
-        assertTrue(updatedDashboardPage.checkCardsBalance(cards));
+        assertEquals(updatedDashboardPage.getCardBalance(firstCardInfo.getNumber()), firstCardInfo.getBalance());
+        assertEquals(updatedDashboardPage.getCardBalance(secondCardInfo.getNumber()), secondCardInfo.getBalance());
     }
 
     @Test
-    void shouldNotTransferMoneyWithEmptyFields() throws Exception {
-        val firstCard = cards.get(0);
+    void shouldNotTransferMoneyWithEmptyFields() {
+        val firstCardInfo = DataHelper.getFirstCardInfo();
+        firstCardInfo.setBalance(dashboardPage.getCardBalance(firstCardInfo.getNumber()));
 
-        val refillPage = dashboardPage.selectCard(firstCard.getId());
+        val refillPage = dashboardPage.selectCard(firstCardInfo.getNumber());
         refillPage.fillInfo(null, null);
 
-        RefillPage.Error.checkError();
+        RefillPage.checkError();
     }
 
     @Test
-    void shouldNotTransferMoneyWithInvalidCardNumber() throws Exception {
-        val firstCard = cards.get(0);
+    void shouldNotTransferMoneyWithInvalidCardNumber() {
+        val firstCardInfo = DataHelper.getFirstCardInfo();
+        firstCardInfo.setBalance(dashboardPage.getCardBalance(firstCardInfo.getNumber()));
 
-        val amount = DataHelper.getRandomAmount(firstCard.getBalance());
+        val amount = DataHelper.getRandomAmount(firstCardInfo.getBalance());
 
-        val refillPage = dashboardPage.selectCard(firstCard.getId());
+        val refillPage = dashboardPage.selectCard(firstCardInfo.getNumber());
         refillPage.fillInfo(DataHelper.getRandomCardNumber(), amount);
 
-        RefillPage.Error.checkError();
+        RefillPage.checkError();
     }
 
     //    Баги
     /*   Тут принимается сумма превышающая лимит карты,
    должна выдаватся ошибка, что недостаточно средств на карте, доступно (сумма на карте) */
     @Test
-    void shouldNotTransferMoneyFromSecondToFirstInvalidAmount() throws Exception {
-        val firstCard = cards.get(0);
-        val secondCard = cards.get(1);
+    void shouldNotTransferMoneyFromSecondToFirstInvalidAmount() {
+        val firstCardInfo = DataHelper.getFirstCardInfo();
+        firstCardInfo.setBalance(dashboardPage.getCardBalance(firstCardInfo.getNumber()));
+        val secondCardInfo = DataHelper.getSecondCardInfo();
+        secondCardInfo.setBalance(dashboardPage.getCardBalance(secondCardInfo.getNumber()));
 
-        val amount = DataHelper.getInvalidAmount(secondCard.getBalance());
+        val amount = DataHelper.getInvalidAmount(secondCardInfo.getBalance());
 
-        val refillPage = dashboardPage.selectCard(firstCard.getId());
-        refillPage.fillInfo(secondCard.getNumber(), amount);
+        val refillPage = dashboardPage.selectCard(firstCardInfo.getNumber());
+        refillPage.fillInfo(secondCardInfo.getNumber(), amount);
 
-        RefillPage.Error.checkError();
+        RefillPage.checkError();
     }
 
     @Test
-    void shouldNotTransferMoneyFromFirstToSecondInvalidAmount() throws Exception {
-        val firstCard = cards.get(0);
-        val secondCard = cards.get(1);
+    void shouldNotTransferMoneyFromFirstToSecondInvalidAmount() {
+        val firstCardInfo = DataHelper.getFirstCardInfo();
+        firstCardInfo.setBalance(dashboardPage.getCardBalance(firstCardInfo.getNumber()));
+        val secondCardInfo = DataHelper.getSecondCardInfo();
+        secondCardInfo.setBalance(dashboardPage.getCardBalance(secondCardInfo.getNumber()));
 
-        val amount = DataHelper.getInvalidAmount(firstCard.getBalance());
+        val amount = DataHelper.getInvalidAmount(firstCardInfo.getBalance());
 
-        val refillPage = dashboardPage.selectCard(secondCard.getId());
-        refillPage.fillInfo(firstCard.getNumber(), amount);
+        val refillPage = dashboardPage.selectCard(secondCardInfo.getNumber());
+        refillPage.fillInfo(firstCardInfo.getNumber(), amount);
 
-        RefillPage.Error.checkError();
+        RefillPage.checkError();
     }
 
     /* Тут принимаеться нулевая сумма, должна выдаватся ошибка,
         что сумма не может быть равной 0 */
     @Test
-    void shouldNotTransferMoneyFromSecondToFirstInvalidAmountZero() throws Exception {
-        val firstCard = cards.get(0);
-        val secondCard = cards.get(1);
+    void shouldNotTransferMoneyFromSecondToFirstInvalidAmountZero() {
+        val firstCardInfo = DataHelper.getFirstCardInfo();
+        firstCardInfo.setBalance(dashboardPage.getCardBalance(firstCardInfo.getNumber()));
+        val secondCardInfo = DataHelper.getSecondCardInfo();
+        secondCardInfo.setBalance(dashboardPage.getCardBalance(secondCardInfo.getNumber()));
 
         val amount = 0;
 
-        val refillPage = dashboardPage.selectCard(firstCard.getId());
-        refillPage.fillInfo(secondCard.getNumber(), amount);
+        val refillPage = dashboardPage.selectCard(firstCardInfo.getNumber());
+        refillPage.fillInfo(secondCardInfo.getNumber(), amount);
 
-        RefillPage.Error.checkError();
+        RefillPage.checkError();
     }
 
     @Test
-    void shouldNotTransferMoneyFromFirstToSecondInvalidAmountZero() throws Exception {
-        val firstCard = cards.get(0);
-        val secondCard = cards.get(1);
+    void shouldNotTransferMoneyFromFirstToSecondInvalidAmountZero() {
+        val firstCardInfo = DataHelper.getFirstCardInfo();
+        firstCardInfo.setBalance(dashboardPage.getCardBalance(firstCardInfo.getNumber()));
+        val secondCardInfo = DataHelper.getSecondCardInfo();
+        secondCardInfo.setBalance(dashboardPage.getCardBalance(secondCardInfo.getNumber()));
 
         val amount = 0;
 
-        val refillPage = dashboardPage.selectCard(secondCard.getId());
-        refillPage.fillInfo(firstCard.getNumber(), amount);
+        val refillPage = dashboardPage.selectCard(secondCardInfo.getNumber());
+        refillPage.fillInfo(firstCardInfo.getNumber(), amount);
 
-        RefillPage.Error.checkError();
+        RefillPage.checkError();
     }
 
     /* Тут осуществяется перевод с карты на эту же карту, должна выдаваться ошибка,
         что невозможно осуществить перевод с карты на эту же карту */
     @Test
-    void shouldNotTransferMoneyFromTheSameCard() throws Exception {
-        val firstCard = cards.get(0);
+    void shouldNotTransferMoneyFromTheSameCard() {
+        val firstCardInfo = DataHelper.getFirstCardInfo();
+        firstCardInfo.setBalance(dashboardPage.getCardBalance(firstCardInfo.getNumber()));
 
-        val amount = DataHelper.getRandomAmount(firstCard.getBalance());
+        val amount = DataHelper.getRandomAmount(firstCardInfo.getBalance());
 
-        val refillPage = dashboardPage.selectCard(firstCard.getId());
-        refillPage.fillInfo(firstCard.getNumber(), amount);
+        val refillPage = dashboardPage.selectCard(firstCardInfo.getNumber());
+        refillPage.fillInfo(firstCardInfo.getNumber(), amount);
 
-        RefillPage.Error.checkError();
+        RefillPage.checkError();
     }
 }
